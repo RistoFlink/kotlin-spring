@@ -4,8 +4,11 @@ import dev.ristoflink.kotlin_spring.controllers.NoteController.NoteResponse
 import dev.ristoflink.kotlin_spring.database.model.Note
 import dev.ristoflink.kotlin_spring.database.repository.NoteRepository
 import org.bson.types.ObjectId
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -21,7 +24,6 @@ class NoteController(
         val title: String,
         val content: String,
         val color: Long,
-        val ownerId: ObjectId,
     )
 
     data class NoteResponse(
@@ -33,7 +35,7 @@ class NoteController(
     )
 
     @PostMapping
-    fun save(body: NoteRequest): NoteResponse {
+    fun save(@RequestBody body: NoteRequest): NoteResponse {
         val note = repository.save(
             Note(
                 id = body.id?.let { ObjectId(it) } ?: ObjectId.get(),
@@ -41,7 +43,7 @@ class NoteController(
                 content = body.content,
                 color = body.color,
                 createdAt = Instant.now(),
-                ownerId = body.ownerId,
+                ownerId = ObjectId(),
             )
         )
         return note.toResponse()
@@ -52,6 +54,11 @@ class NoteController(
         return repository.findByOwnerId(ObjectId(ownerId)).map {
                 it.toResponse()
         };
+    }
+
+    @DeleteMapping(path = ["/{id}"])
+    fun deleteById(@PathVariable id: String) {
+        repository.deleteById(ObjectId(id))
     }
 }
 
